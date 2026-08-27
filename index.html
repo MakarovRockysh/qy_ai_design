@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#8f2f24" />
+    <title>清明上河园 AI · 场景化业务原型</title>
+    <link rel="stylesheet" href="styles.css?v=20260825-4" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="scene-sidebar">
+        <button class="brand" type="button" data-action="show-catalog">
+          <span class="brand-seal">清园</span>
+          <span><strong>AI 场景化原型</strong><small>业务流程与页面覆盖</small></span>
+        </button>
+
+        <label class="scene-search">
+          <span>搜索</span>
+          <input id="scene-search" type="search" placeholder="场景、角色或页面" />
+        </label>
+
+        <nav id="scene-nav" class="scene-nav" aria-label="业务场景目录"></nav>
+
+      </aside>
+
+      <main class="workspace">
+        <section id="catalog-view" class="view-panel"></section>
+        <section id="scene-view" class="view-panel" hidden></section>
+        <section id="matrix-view" class="view-panel" hidden></section>
+      </main>
+    </div>
+
+    <div id="preview-root" class="preview-root" hidden></div>
+    <div id="modal-root" class="modal-root" hidden></div>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <script src="scenarios.js?v=20260825-4"></script>
+    <script src="app.js?v=20260825-4"></script>
+  </body>
+</html>
