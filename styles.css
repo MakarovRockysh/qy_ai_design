@@ -2428,3 +2428,35 @@ button { cursor: pointer; }
 .journey-actual-summary dl { margin: 0; }.journey-actual-summary dl .saved { color: #4d765a; font-weight: 700; }
 .journey-trip-recap { margin: 12px 14px 0; padding: 12px; border-left: 3px solid var(--red); background: #fffdfa; }
 .journey-trip-recap p { margin: 5px 0 10px; color: #75695f; }.journey-trip-recap button { min-height: 32px; padding: 0 10px; border: 1px solid var(--red); border-radius: 7px; background: transparent; color: var(--red); }
+.ticket-favorite-bar { display: flex; justify-content: flex-end; padding: 12px 16px 0; }
+.ticket-favorite-bar button { border: 1px solid #decfc5; border-radius: 18px; padding: 6px 14px; background: #fff; color: #93352e; font-size: 14px; }
+.ticket-detail { margin: -14px -14px 0; background: #f5f2ed; color: #292522; }
+.ticket-detail-cover img { display: block; width: 100%; height: 180px; object-fit: cover; }
+.ticket-detail-main, .ticket-detail-section { background: #fff; padding: 16px; }
+.ticket-detail-main { margin-bottom: 9px; }
+.ticket-detail-price { display: flex; align-items: center; justify-content: space-between; color: #a2362b; font-size: 18px; }
+.ticket-detail-price strong { font-size: 28px; }.ticket-detail-price small { color: #8b8178; font-size: 12px; }
+.ticket-detail-price .ticket-favorite-bar { padding: 0; }
+.ticket-detail-main h5 { margin: 8px 0 5px; font-size: 19px; line-height: 1.4; }
+.ticket-detail-main p, .ticket-detail-section p, .ticket-detail-section dd, .ticket-detail-section dt { font-size: 13px; line-height: 1.65; }
+.ticket-detail-main p, .ticket-detail-muted, .ticket-detail-section dt { color: #81766d; }
+.ticket-detail-main p, .ticket-detail-section p { margin: 0; }
+.ticket-detail-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.ticket-detail-tags span { padding: 3px 7px; background: #f8f0eb; color: #975046; border-radius: 4px; font-size: 11px; }
+.ticket-detail-section { border-bottom: 1px solid #eee7df; }
+.ticket-detail-section h6 { margin: 0 0 9px; font-size: 15px; }
+.ticket-detail-section p + p { margin-top: 7px; }
+.ticket-detail-section dl { margin: 0; }.ticket-detail-section dl div { display: flex; gap: 12px; padding: 4px 0; }.ticket-detail-section dt { flex: 0 0 58px; }.ticket-detail-section dd { margin: 0; }
+.feedback-center { padding: 4px 0 20px; }
+.feedback-center-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.feedback-center-actions button, .feedback-records button { border: 0; background: #fff; text-align: left; }
+.feedback-center-actions button { min-width: 0; padding: 14px 10px; border-radius: 10px; display: flex; align-items: center; gap: 8px; }
+.feedback-center-actions i { display: grid; place-items: center; flex: 0 0 34px; height: 34px; border-radius: 9px; color: #a3382d; background: #f5e5df; font-style: normal; }
+.feedback-center-actions span, .feedback-records span { min-width: 0; flex: 1; }
+.feedback-center-actions b, .feedback-records b { display: block; font-size: 14px; color: #302b27; }
+.feedback-center-actions small, .feedback-records small { display: block; margin-top: 4px; font-size: 11px; line-height: 1.5; color: #8a7f75; }
+.feedback-center-actions em, .feedback-records em { color: #9a8e83; font-style: normal; font-size: 12px; white-space: nowrap; }
+.feedback-center > header { display: flex; align-items: baseline; justify-content: space-between; margin: 24px 2px 10px; }
+.feedback-center > header h5 { margin: 0; font-size: 16px; }.feedback-center > header span { font-size: 11px; color: #9a8e83; }
+.feedback-records { overflow: hidden; border-radius: 10px; }
+.feedback-records button { width: 100%; display: flex; align-items: center; gap: 10px; padding: 16px 14px; border-bottom: 1px solid #eee7df; }

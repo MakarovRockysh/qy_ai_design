@@ -12,10 +12,15 @@ const state = {
 const defaultWorkOrderCategories = ["服务态度", "设施安全", "票务纠纷", "消费价格", "环境卫生", "秩序管理", "宣传误导"];
 const workOrderData = {
   categories: defaultWorkOrderCategories.map((name, index) => ({ name, createdAt: index < 4 ? "2026-08-01" : "2026-08-12", count: [16, 8, 21, 13, 6, 9, 4][index] })),
-  selectedCategory: "消费价格"
+  selectedCategory: "消费价格",
+  draft: null,
+  submitted: null
 };
 
 const previewState = { sceneId: "", pageId: "" };
+let ticketFavorite = false;
+let newSuggestion = null;
+let tripPurchased = false;
 
 const screenMediaCatalog = {
   scenic: { src: "assets/scenic-day.webp", alt: "宋韵园区河岸与石桥场景图" },
@@ -49,8 +54,13 @@ function escapeText(value) {
 }
 
 function resetWorkOrderData() {
+  ticketFavorite = false;
+  newSuggestion = null;
+  tripPurchased = false;
   workOrderData.categories = defaultWorkOrderCategories.map((name, index) => ({ name, createdAt: index < 4 ? "2026-08-01" : "2026-08-12", count: [16, 8, 21, 13, 6, 9, 4][index] }));
   workOrderData.selectedCategory = "消费价格";
+  workOrderData.draft = null;
+  workOrderData.submitted = null;
 }
 
 function renderWorkOrderCategoryChoices() {
@@ -70,11 +80,25 @@ function renderWorkOrderCategoryTable() {
 }
 
 function renderScreenBody(screen) {
-  const body = String(screen.body || "")
+  if (workOrderData.selectedCategory !== "消费价格" && screen.id === "s20-recognized") {
+    return `<section class="s20-page"><h5>请核对投诉内容</h5><p>投诉类型：${escapeText(workOrderData.selectedCategory)}</p><p>已上传的材料将随投诉一并提交。</p></section>`;
+  }
+  let body = String(screen.body || "")
+    .replaceAll("{{NEW_SUGGESTION_RECORD}}", newSuggestion ? `<button type="button" data-ui-route="s21-new-detail"><span><b>${escapeText(newSuggestion.type)}建议</b><small>刚刚 · SG20260817018</small></span><em>已提交 ›</em></button>` : "")
+    .replaceAll("{{NEW_COMPLAINT_RECORD}}", workOrderData.submitted ? `<button type="button" data-ui-route="s20-c-detail"><span><b>${escapeText(workOrderData.submitted.category)}投诉</b><small>刚刚 · QY20260817052</small></span><em>待受理 ›</em></button>` : `<button type="button" data-ui-route="s20-c-detail"><span><b>消费价格投诉</b><small>2026-08-17 12:32 · QY20260817052</small></span><em>待受理 ›</em></button>`)
+    .replaceAll("{{COMPLAINT_CATEGORY}}", escapeText(workOrderData.submitted?.category || workOrderData.selectedCategory))
+    .replaceAll("{{COMPLAINT_DESCRIPTION}}", escapeText(workOrderData.draft?.description || workOrderData.submitted?.description || "菜单标价 76 元，实际支付 88 元。"))
+    .replaceAll("{{COMPLAINT_EXPECTATION}}", escapeText(workOrderData.draft?.expectation || workOrderData.submitted?.expectation || "退还差额并核实标价"))
+    .replaceAll("{{NEW_SUGGESTION_DETAIL}}", `<div class="ui-summary"><div><span>建议类型</span><b>${escapeText(newSuggestion?.type || "游览体验")}</b></div><div><span>建议内容</span><b>${escapeText(newSuggestion?.content || "希望虹桥附近增加遮阳休息区和饮水点。")}</b></div><div><span>联系方式</span><b>${escapeText(newSuggestion?.contact || "未填写")}</b></div><div><span>状态</span><b>已提交</b></div><div><span>编号</span><b>SG20260817018</b></div></div>`)
+    .replaceAll("{{TICKET_FAVORITE_BUTTON}}", `<div class="ticket-favorite-bar"><button type="button" data-ticket-favorite aria-pressed="${ticketFavorite}">${ticketFavorite ? "★ 已收藏" : "☆ 收藏"}</button></div>`)
+    .replaceAll("{{TICKET_FAVORITE_ITEM}}", ticketFavorite ? `<div class="s03-business-links"><button type="button" data-ui-route="s10-detail"><i>票</i><span><b>成人日间票</b><small>¥120 / 人 · 当日单次入园</small></span><em>查看 ›</em></button></div>` : "")
     .replaceAll("{{WORK_ORDER_CATEGORY_CHOICES}}", renderWorkOrderCategoryChoices())
     .replaceAll("{{WORK_ORDER_CATEGORY_OPTIONS}}", renderWorkOrderCategoryOptions())
     .replaceAll("{{WORK_ORDER_CATEGORY_TABLE}}", renderWorkOrderCategoryTable())
     .replaceAll("{{SELECTED_WORK_ORDER_CATEGORY}}", escapeText(workOrderData.selectedCategory));
+  if (tripPurchased && screen.id === "s09-list") {
+    body = body.replaceAll('data-ui-route="s09-pretrip"', 'data-ui-route="s09-pretrip-purchased"').replace("3项待完成", "已购项目可查看");
+  }
   if (screen.surface !== "mobile" || screen.aiChat || screen.home) return body;
   const mediaKey = Object.keys(screenMediaAssignments).find(key => screenMediaAssignments[key].includes(screen.id));
   const media = mediaKey ? screenMediaCatalog[mediaKey] : null;
@@ -294,19 +318,20 @@ function renderSceneBoard(sceneItem, activeId) {
   }).join("")}</div>`;
 }
 
-function renderInteractivePreview(pageId, sceneId = "") {
+function renderInteractivePreview(pageId, sceneId = "", question = "") {
   const owner = allPageEntries.find(item => item.page.id === pageId && (!sceneId || item.scene.id === sceneId)) || allPageEntries.find(item => item.page.id === pageId);
   if (!owner) return;
   previewState.sceneId = owner.scene.id;
   previewState.pageId = owner.page.id;
   const root = $("#preview-root");
   root.hidden = false;
+  const displayPage = question ? { ...owner.page, body: `<section class="s03-chat-page"><div class="s03-assistant-head"><span class="s03-avatar">清</span><div><b>小清 AI 助手</b><small>在线</small></div></div><div class="s03-thread"><div class="s03-message user"><p>${escapeText(question)}</p></div><div class="s03-message ai"><span class="s03-avatar small">清</span><div><p>可以查看相关服务并继续办理。</p><div class="s03-business-links"><button type="button" data-ui-route="${escapeText(owner.page.id)}"><i>→</i><span><b>${escapeText(owner.page.title)}</b><small>查看相关信息和操作</small></span><em>查看 ›</em></button></div></div></div></div></section>` } : owner.page;
   root.innerHTML = `<section class="preview-shell ${owner.page.surface === "admin" ? "admin-preview" : "mobile-preview"}" role="dialog" aria-modal="true">
     <header class="preview-header">
       <div><span>${escapeText(owner.scene.id)} · ${escapeText(owner.scene.title)}</span><strong>${escapeText(owner.page.title)}</strong></div>
       <button type="button" data-action="close-preview" aria-label="关闭交互预览">×</button>
     </header>
-    <div class="preview-canvas">${renderDevice(owner.scene, owner.page)}</div>
+    <div class="preview-canvas">${renderDevice(owner.scene, displayPage)}</div>
   </section>`;
 }
 
@@ -548,6 +573,17 @@ document.addEventListener("click", event => {
     if (previewEntry) renderInteractivePreview(previewEntry.dataset.previewPage, previewEntry.dataset.previewScene);
     return;
   }
+  if (target.hasAttribute("data-ticket-favorite")) {
+    ticketFavorite = !ticketFavorite;
+    renderInteractivePreview(previewState.pageId || "s10-detail", previewState.sceneId);
+    showToast(ticketFavorite ? "已加入我的收藏" : "已取消收藏");
+    return;
+  }
+  if (target.hasAttribute("data-copy-trip-code")) {
+    if (!navigator.clipboard?.writeText) { showToast("当前无法复制，请手动复制口令 QY-8H2K-91"); return; }
+    navigator.clipboard.writeText("QY-8H2K-91").then(() => showToast("口令已复制")).catch(() => showToast("复制失败，请手动复制口令 QY-8H2K-91"));
+    return;
+  }
 
   if (target.dataset.sceneId) {
     openScene(target.dataset.sceneId);
@@ -615,7 +651,20 @@ document.addEventListener("click", event => {
       showToast("请先输入问题");
       input?.focus();
     } else {
-      renderInteractivePreview("s03-loading", "S03");
+      const question = input.value.trim();
+      const routes = [
+        [/投诉|举报/, "s20-types"], [/售后|退款进度|退款.*进度/, "s15-processing"], [/退款|退票/, "s15-order"],
+        [/停车|车位|自驾|交通/, "s18-parking"], [/走失|急救|受伤|安全/, "s19-entry"],
+        [/出行人|同行人/, "s23-list"], [/凭证|二维码|我的订单/, "s14-list"],
+        [/天气|穿衣|穿着/, "s04-overview"], [/厕所|卫生间|母婴/, "s17-results"],
+        [/路线|导航|怎么走/, "s16-map"], [/餐饮|餐厅|吃饭/, "s10-dining"],
+        [/优惠|折扣/, "s05-offers"], [/演出|节目/, "s05-programs"],
+        [/门票|购票|买票/, "s10-mall"], [/我的行程|已保存.*行程/, "s09-list"],
+        [/行程|攻略/, "s06-entry"], [/开放时间|营业时间|景区介绍/, "s05-about"],
+        [/人工|客服/, "s03-human"]
+      ];
+      const found = routes.find(([pattern]) => pattern.test(question));
+      renderInteractivePreview(found?.[1] || "s03-human", "", question);
     }
     return;
   }
@@ -887,6 +936,24 @@ document.addEventListener("click", event => {
   if (target.dataset.pageAction === "1") {
     const targetPage = target.dataset.targetPage;
     const insidePreview = Boolean(target.closest("#preview-root"));
+    if (targetPage === "s20-checking" && target.dataset.ownerPage === "s20-materials") {
+      const form = target.closest(".mobile-page")?.querySelector(".s20-form");
+      const values = form?.querySelectorAll("input");
+      const description = form?.querySelector("textarea")?.value.trim() || "";
+      if (!description) { showToast("请填写问题描述"); return; }
+      workOrderData.draft = { category: workOrderData.selectedCategory, description, expectation: values?.[2]?.value.trim() || "" };
+    }
+    if (targetPage === "s20-c-detail" && target.dataset.ownerPage === "s20-confirm") {
+      workOrderData.submitted = workOrderData.draft || { category: workOrderData.selectedCategory, description: "菜单标价 76 元，实际支付 88 元。", expectation: "退还差额并核实标价" };
+      workOrderData.draft = null;
+    }
+    if (["s13-synced", "s13-synced-time-adjusted"].includes(targetPage)) tripPurchased = true;
+    if (targetPage === "s21-success") {
+      const form = target.closest(".mobile-page")?.querySelector(".vs-suggestion-form");
+      const content = form?.querySelector("textarea")?.value.trim() || "";
+      if (!content) { showToast("请填写建议内容"); return; }
+      newSuggestion = { type: form.querySelector("select")?.value || "游览体验", content, contact: form.querySelector("input")?.value.trim() || "" };
+    }
     if (targetPage === "s01-logged-home" || targetPage === "s12-payment") {
       const consent = target.closest(".mobile-page")?.querySelector(".ui-consent input");
       if (consent && !consent.checked) {
